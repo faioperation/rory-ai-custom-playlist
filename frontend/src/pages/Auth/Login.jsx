@@ -1,0 +1,197 @@
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import toast from "react-hot-toast";
+import { useState } from "react";
+import { FiEye, FiEyeOff } from "react-icons/fi";
+import Logo from "../../assets/img/logo3.png";
+import { loginApi } from "../../api/authApi";
+
+export default function Login() {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+
+    const email = e.target.email.value.trim();
+    const password = e.target.password.value.trim();
+
+    if (!email || !password) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const res = await loginApi({ email, password });
+
+      const token = res?.data?.data?.token;
+      const user = res?.data?.data?.user;
+
+      if (!token || !user) {
+        toast.error("Login failed. Invalid server response.");
+        return;
+      }
+
+      localStorage.setItem("token", token);
+      login(user, token);
+      toast.success(`Login successful`);
+
+      if (user.role === "admin") {
+        navigate("/admin", { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
+
+    } catch (error) {
+      console.error("Login Error:", error);
+
+      toast.error(
+        error?.response?.data?.message || "Login failed"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div
+      className="
+        relative
+        w-full
+        max-w-xl
+        bg-white/80
+        backdrop-blur-xl
+        rounded-[28px]
+        shadow-[0_30px_80px_-20px_rgba(0,0,0,0.25)]
+        p-10 md:p-16
+        space-y-2
+        animate-fade-in
+      "
+    >
+      <div className="absolute inset-0 rounded-[28px] bg-gradient-to-br from-[#9810FA]/15 to-[#155DFC]/15 blur-2xl -z-10" />
+
+      <div className="flex justify-center mb-4 pb-5">
+        <img
+          src={Logo}
+          alt="logo"
+          className="h-20 w-20 scale-[4.5] object-contain"
+        />
+      </div>
+
+      <h1 className="text-3xl pt-4 font-extrabold text-center text-gray-900">
+        Welcome Back!
+      </h1>
+
+      <p className="text-gray-500 text-center">
+        Enter your credentials to access your account
+      </p>
+
+      <form onSubmit={handleLogin} className="space-y-6 mt-6">
+        <div>
+          <label className="block text-sm font-medium mb-2 text-gray-700">
+            Email Address
+          </label>
+
+          <input
+            type="email"
+            name="email"
+            placeholder="Enter your email"
+            required
+            className="
+              w-full
+              rounded-xl
+              border
+              border-gray-300
+              px-5
+              py-3
+              focus:outline-none
+              focus:ring-2
+              focus:ring-[#9810FA]
+              transition
+            "
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2 text-gray-700">
+            Password
+          </label>
+
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              placeholder="Enter your password"
+              required
+              className="
+                w-full
+                rounded-xl
+                border
+                border-gray-300
+                px-5
+                py-3
+                pr-12
+                focus:outline-none
+                focus:ring-2
+                focus:ring-[#9810FA]
+                transition
+              "
+            />
+
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-[#9810FA] transition"
+            >
+              {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
+            </button>
+          </div>
+
+          <div className="text-right mt-2">
+            <Link
+              to="/forgot-password"
+              className="text-sm text-[#9810FA] hover:underline"
+            >
+              Forgot password?
+            </Link>
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="
+            w-full
+            py-4
+            rounded-xl
+            bg-gradient-to-r
+            from-[#9810FA]
+            to-[#155DFC]
+            text-white
+            font-semibold
+            transition
+            hover:opacity-90
+            disabled:opacity-60 cursor-pointer
+          "
+        >
+          {loading ? "Logging in..." : "Login"}
+        </button>
+      </form>
+
+      <p className="text-md text-center mt-8 text-gray-600">
+        Don’t have an account?{" "}
+        <Link
+          to="/signup"
+          className="text-blue-600 font-semibold hover:underline"
+        >
+          Sign Up
+        </Link>
+      </p>
+    </div>
+  );
+}

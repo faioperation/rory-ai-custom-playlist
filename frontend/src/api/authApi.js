@@ -1,0 +1,34 @@
+import axiosInstance from "./axiosInstance";
+
+export const registerApi = (data) => {
+  return axiosInstance.post("/api/v1/auth/register", data);
+};
+
+export const loginApi = (data) => {
+  return axiosInstance.post("/api/v1/auth/login", data);
+};
+
+export const forgotPasswordApi = (data) => {
+  return axiosInstance.post("/api/v1/auth/forgot-password", data);
+};
+
+export const verifyOtpApi = (data) => {
+  return axiosInstance.post("/api/v1/auth/verify-otp", data);
+};
+
+export const resetPasswordApi = (data) => {
+  return axiosInstance.post("/api/v1/auth/reset-password", data);
+};
+
+
+
+
+
+
+
+
+
+
+
+
+

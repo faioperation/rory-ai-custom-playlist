@@ -1,0 +1,124 @@
+import { createBrowserRouter } from "react-router-dom";
+
+/* ================== LAYOUTS ================== */
+import PublicLayout from "../layouts/PublicLayout";
+import QuizLayout from "../layouts/QuizLayout";
+import AuthLayout from "../layouts/AuthLayout";
+import PlaylistLayout from "../layouts/PlaylistLayout";
+
+/* ================== PAGES ================== */
+import Home from "../pages/Home/Home";
+import Signup from "../pages/Auth/Signup";
+import Login from "../pages/Auth/Login";
+import ForgotPassword from "../pages/Auth/ForgotPassword";
+import ResetPassword from "../pages/Auth/ResetPassword";
+import VerifyOTP from "../pages/Auth/VerifyOTP";
+
+/* ================== QUIZ ================== */
+import Step1_EventType from "../pages/Quiz/components/Step1_EventType";
+import Step2_EventDetails from "../pages/Quiz/components/Step2_EventDetails";
+import Step3_Genres from "../pages/Quiz/components/Step3_Genres";
+import Step4_MusicImportance from "../pages/Quiz/components/Step4_MusicImportance";
+import Step5_Vibe from "../pages/Quiz/components/Step5_Vibe";
+import Step6_Mood from "../pages/Quiz/components/Step6_Mood";
+import Step7_Energy from "../pages/Quiz/components/Step7_Energy";
+import Step8_Tempo from "../pages/Quiz/components/Step8_Tempo";
+import Step9_Era from "../pages/Quiz/components/Step9_Era";
+import Step10_Final from "../pages/Quiz/components/Step10_Final";
+
+/* ================== PLAYLIST ================== */
+import UserPlaylistResult from "../pages/Playlist/UserPlaylistResult";
+
+/* ================== PAYMENT ================== */
+import PaymentSuccess from "../pages/Payment/PaymentSuccess";
+import PaymentCancel from "../pages/Payment/PaymentCancel";
+
+/* ================== POLICIES ================== */
+import Terms from "../pages/Policies/Terms";
+import PrivacyPolicy from "../pages/Policies/PrivacyPolicy";
+import CookiePolicy from "../pages/Policies/CookiePolicy";
+import RefundPolicy from "../pages/Policies/RefundPolicy";
+
+/* ================== ADMIN ================== */
+import DashboardLayout from "../admin/layout/DashboardLayout";
+import AdminHome from "../admin/pages/Home";
+import AdminUsers from "../admin/pages/User";
+import AdminPlaylists from "../admin/pages/Playlists";
+import AdminProfile from "../admin/pages/Profile";
+import AdminProtected from "../admin/components/common/AdminProtected";
+import PlaylistResult from "../pages/Playlist/PlaylistResult";
+
+const router = createBrowserRouter([
+  /* ================= PUBLIC ================= */
+  {
+    element: <PublicLayout />,
+    children: [
+      { path: "/", element: <Home /> },
+
+      {
+        path: "/quiz",
+        element: <QuizLayout />,
+        children: [
+          { index: true, element: <Step1_EventType /> },
+          { path: "details", element: <Step2_EventDetails /> },
+          { path: "genres", element: <Step3_Genres /> },
+          { path: "importance", element: <Step4_MusicImportance /> },
+          { path: "vibe", element: <Step5_Vibe /> },
+          { path: "mood", element: <Step6_Mood /> },
+          { path: "energy", element: <Step7_Energy /> },
+          { path: "tempo", element: <Step8_Tempo /> },
+          { path: "era", element: <Step9_Era /> },
+          { path: "final", element: <Step10_Final /> },
+        ],
+      },
+
+      {
+        path: "/playlist",
+        element: <PlaylistLayout />,
+        children: [
+          { path: ":id", element: <PlaylistResult /> },
+          { index: true, element: <UserPlaylistResult /> },
+        ],
+      },
+
+      { path: "/success", element: <PaymentSuccess /> },
+      { path: "/cancel", element: <PaymentCancel /> },
+
+      { path: "/terms", element: <Terms /> },
+      { path: "/privacy-policy", element: <PrivacyPolicy /> },
+      { path: "/cookie-policy", element: <CookiePolicy /> },
+      { path: "/refund-policy", element: <RefundPolicy /> },
+    ],
+  },
+
+  /* ================= AUTH ================= */
+  {
+    element: <AuthLayout />,
+    children: [
+      { path: "/signup", element: <Signup /> },
+      { path: "/login", element: <Login /> },
+      { path: "/forgot-password", element: <ForgotPassword /> },
+      { path: "/reset-password", element: <ResetPassword /> },
+      { path: "/verify-otp", element: <VerifyOTP /> },
+    ],
+  },
+
+  /* ================= ADMIN (PROTECTED) ================= */
+  {
+    path: "/admin",
+    element: <AdminProtected />, // 🔒 Only this is protected
+    children: [
+      {
+        element: <DashboardLayout />,
+        children: [
+          { index: true, element: <AdminHome /> },
+          { path: "user", element: <AdminUsers /> },
+          { path: "playlists", element: <AdminPlaylists /> },
+          { path: "profile", element: <AdminProfile /> },
+        ],
+      },
+    ],
+  },
+]);
+
+export default router;
