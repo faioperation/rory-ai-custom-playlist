@@ -1,0 +1,29 @@
+# =============================================================================
+# Frontend .dockerignore
+# Build context: ./frontend
+# =============================================================================
+
+# Dependencies — installed inside image by npm ci
+node_modules
+
+# Build output — rebuilt inside image by npm run build
+dist
+.vite
+
+# Environment secrets — VITE_ vars are passed as build ARGs
+.env
+.env.*
+!.env.example
+
+# Development / editor
+.git
+.gitignore
+*.md
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*

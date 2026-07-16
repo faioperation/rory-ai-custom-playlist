@@ -1,0 +1,167 @@
+# =============================================================================
+# Soundtrack My Night — Production Docker Compose
+# =============================================================================
+# Purpose : Production deployment on a Linux VPS or cloud VM.
+# Usage   : docker compose -f docker-compose.prod.yml up -d --build
+#
+# Architecture:
+#   nginx    → Reverse proxy (the only container exposed on port 80/443)
+#   backend  → Node.js Express API  (internal, port 3000)
+#   ai       → FastAPI AI service   (internal, port 8000)
+#   frontend → nginx SPA serve      (internal, port 80)
+#
+# MongoDB: Use MongoDB Atlas (external). Set MONGO_URI in backend/.env.
+#   No mongo container in production.
+#
+# SSL: Terminate TLS at your hosting level (Certbot + nginx on host, or
+#   a cloud load balancer). See DEPLOYMENT.md for full SSL setup.
+#
+# Requirements:
+#   1. Copy .env.example → .env in backend/, ai/, frontend/ and fill in ALL values
+#   2. Ensure VITE_BACKEND_URL is empty ("") so axios uses relative paths via nginx
+#   3. Ensure FRONTEND_URL in backend/.env matches your real domain
+#   4. docker compose -f docker-compose.prod.yml up -d --build
+# =============================================================================
+
+services:
+
+  # ── nginx — reverse proxy (only externally-exposed service) ───────────────
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: smn_nginx_prod
+    restart: always
+    ports:
+      - "80:80"
+      # Uncomment for SSL (after Certbot setup — see DEPLOYMENT.md)
+      # - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      # Uncomment for Let's Encrypt SSL certificates
+      # - /etc/letsencrypt:/etc/letsencrypt:ro
+      # - /var/www/certbot:/var/www/certbot:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    networks:
+      - smn_prod_network
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  # ── backend — Node.js Express API ─────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: production            # Uses the 'production' stage in backend/Dockerfile
+    container_name: smn_backend_prod
+    restart: always
+    # NOT exposed to host — only accessible via nginx inside Docker network
+    expose:
+      - "3000"
+    volumes:
+      # Named volume: persists uploaded profile images across deploys
+      - uploads_data:/app/uploads
+    env_file:
+      - ./backend/.env
+    environment:
+      NODE_ENV: production
+      # AI_ENDPOINT must point to the ai service inside Docker network
+      AI_ENDPOINT: http://ai:8000
+    depends_on:
+      ai:
+        condition: service_healthy
+    networks:
+      - smn_prod_network
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  # ── ai — FastAPI playlist generator ───────────────────────────────────────
+  ai:
+    build:
+      context: ./ai
+      dockerfile: Dockerfile
+    container_name: smn_ai_prod
+    restart: always
+    # NOT exposed to host — called only by backend container
+    expose:
+      - "8000"
+    env_file:
+      - ./ai/.env
+    environment:
+      PYTHONUNBUFFERED: "1"
+    networks:
+      - smn_prod_network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  # ── frontend — React SPA served by nginx ──────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: production
+      args:
+        # VITE_BACKEND_URL is embedded at build time by Vite.
+        # Leave EMPTY in production: axios will use relative URLs (/api/...)
+        # which nginx routes to backend:3000.
+        VITE_BACKEND_URL: ${VITE_BACKEND_URL:-}
+    container_name: smn_frontend_prod
+    restart: always
+    # NOT exposed to host — served through nginx reverse proxy
+    expose:
+      - "80"
+    networks:
+      - smn_prod_network
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+# ── Named volumes ─────────────────────────────────────────────────────────────
+volumes:
+  # Persists admin and user profile images uploaded via Multer
+  uploads_data:
+    driver: local
+    name: smn_uploads_prod
+
+# ── Networks ──────────────────────────────────────────────────────────────────
+networks:
+  smn_prod_network:
+    driver: bridge
+    name: smn_prod_network

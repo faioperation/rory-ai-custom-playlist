@@ -1,0 +1,34 @@
+# =============================================================================
+# Backend .dockerignore
+# Build context: ./backend
+# =============================================================================
+
+# Dependencies — installed fresh inside image by npm ci
+node_modules
+
+# Runtime data — not part of the application image
+# uploads are stored in a named Docker volume in production
+uploads
+
+# Environment secrets — passed via env_file / environment in compose
+.env
+.env.*
+!.env.example
+
+# Development only
+.git
+.gitignore
+*.md
+
+# Editor / OS artefacts
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Image directory (reference docs, not needed in container)
+image/

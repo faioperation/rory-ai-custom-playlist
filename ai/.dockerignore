@@ -1,0 +1,48 @@
+# =============================================================================
+# AI Service .dockerignore
+# Build context: ./ai
+# =============================================================================
+
+# Virtual environments — dependencies installed inside image
+venv/
+.venv/
+.env/
+env/
+
+# Environment secrets — passed via env_file in compose
+.env
+.env.*
+!.env.example
+
+# Python cache artefacts
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+*.egg
+
+# Test artefacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Editor / OS
+.git
+.gitignore
+*.md
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Build / distribution
+dist/
+build/
+
+# Jupyter
+.ipynb_checkpoints/

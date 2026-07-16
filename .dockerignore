@@ -1,0 +1,42 @@
+# =============================================================================
+# Root .dockerignore — applies when docker build context is the repo root
+# =============================================================================
+
+# Git
+.git
+.gitignore
+
+# Documentation / editor
+*.md
+.vscode
+.idea
+
+# Environment secrets
+.env
+.env.*
+!.env.example
+
+# All service node_modules and build artifacts
+node_modules
+backend/node_modules
+frontend/node_modules
+frontend/dist
+frontend/.vite
+
+# Python artifacts
+ai/__pycache__
+ai/*.pyc
+ai/venv
+ai/.env
+ai/.venv
+
+# Uploads (runtime data, not part of the build)
+backend/uploads
+
+# Docker files themselves (not needed in build context)
+docker-compose*.yml
+nginx/
+
+# Logs
+*.log
+npm-debug.log*
