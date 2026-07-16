@@ -29,10 +29,15 @@ COPY . .
 # Create upload dirs expected by multer (uploads/admin, uploads/user)
 RUN mkdir -p uploads/admin uploads/user
 
+# Copy and make entrypoint executable (handles WAIT_HOSTS for mongo)
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
 EXPOSE 3000
 
 # nodemon already installed as devDependency — use it for hot-reload
-ENTRYPOINT ["dumb-init", "--"]
+# docker-entrypoint.sh waits for WAIT_HOSTS (e.g. mongo:27017) before exec
+ENTRYPOINT ["dumb-init", "--", "/docker-entrypoint.sh"]
 CMD ["npx", "nodemon", "src/server.js"]
 
 # ── Stage 3: production deps only ─────────────────────────────────────────────
@@ -58,6 +63,10 @@ COPY --from=deps --chown=appuser:appgroup /app/node_modules ./node_modules
 # Copy application source
 COPY --chown=appuser:appgroup . .
 
+# Copy and make entrypoint executable
+COPY --chown=root:root docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
 # Create upload dirs and give ownership to non-root user
 # These are mounted as a named volume in docker-compose.prod.yml
 RUN mkdir -p uploads/admin uploads/user && \
@@ -71,5 +80,6 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD wget -qO- http://localhost:3000/health || exit 1
 
-ENTRYPOINT ["dumb-init", "--"]
+# docker-entrypoint.sh checks WAIT_HOSTS before exec-ing the CMD
+ENTRYPOINT ["dumb-init", "--", "/docker-entrypoint.sh"]
 CMD ["node", "src/server.js"]
